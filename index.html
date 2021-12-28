@@ -119,49 +119,54 @@
                 }
             }
             if(initial){
-               paths.sort(a,b => a.length - b.length)
+               paths.sort((a,b) => a.length - b.length)
                paths = paths.map(function(path){
+                   let seats = 0
+                   for (locale of path){
+                        seats += seatsFor(locale, lord, teuton, bonus)
+                   }
                    return {
-                    "seats": min(path.reduce((total, locale)=> total + seatsFor(locale, lord, teuton, bonus)), 2), 
+                    "seats": Math.min(seats, 2),
                     "supportsShips": path.some(locale => supportsShips(locale, teuton)),
                     "route": path
                    }
                 })
                 let seat_paths = paths.filter(path => path.seats >= 1)
                 let double_seat_paths = paths.filter(path => path.seats >= 2)
-                let ship_paths = paths.filter(path.supportsShips)
+                let ship_paths = paths.filter(path => path.supportsShips)
                 let double_seat_ship_paths = double_seat_paths.filter(path => ship_paths.includes(path))
                 let seat_ship_paths = seat_paths.filter(path => ship_paths.includes(path))
                 if(double_seat_ship_paths.length > 0){
-                    return [[double_seat_ship_paths[0]], 2 + min(ships, 2)]
+                    return [[double_seat_ship_paths[0].route], 2 + Math.min(ships, 2)]
                 }
                 if(double_seat_paths.length > 0){
-                    if(ship_paths.length > 0){
-                        return[[double_seat_paths[0], ship_paths[0]], 2 + min(ships,2)]
-                    }else{
-                        return [[double_seat_paths[0]], 2]
+                    if(ship_paths.length > 0){    
+                        return[[double_seat_paths[0].route, ship_paths[0].route], 2 + Math.min(ships,2)]
+                    }else{                    
+                        return [[double_seat_paths[0].route], 2]
                     }
                 }
 
                 if(seat_ship_paths.length > 0){
                     let main = seat_ship_paths[0]
                     let others = seat_paths.filter(path => path.route[path.length-1] !== main.route[main.length-1])
-                    if(others.length > 0){
-                        return [[main, others[0]], 2 + min(ships, 2)]
-                    }else{
-                        return [[main], 1 + min(ships, 2)]
+                    if(others.length > 0){    
+                        return [[main.route, others[0].route], 2 + Math.min(ships, 2)]
+                    }else{                    
+                        return [[main].route, 1 + Math.min(ships, 2)]
                     }
                 }
                 if(seat_paths.length > 0){
-                    let ret = seat_paths.slice(0, 2)
+                    let ret = seat_paths.slice(0, 2).map(path => path.route)
                     let prov = ret.length
                     if(ship_paths.length > 0){
-                        ret.push(ship_paths[0])
-                        return [ret, prov + min(ships, 2)]
+                        ret.push(ship_paths[0].route)
+                        return [ret, prov + Math.min(ships, 2)]
                     }else{
                         return[ret, prov]
                     }
                 }
+                return [[], 0]
             }else{
                 return paths
             }
@@ -182,10 +187,10 @@
         }
 
         function seatsFor(locale, lord, teuton, bonus){
-            return (map[start].seats.includes(lord) ? 1 : 0) + (bonus && ((commandery && teuton) || (bonus && start === "Novgorod" && !teuton))) 
+            return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && ((map[locale].commandery && teuton) || (bonus && locale === "Novgorod" && !teuton)) ? 1 : 0)) 
         }
     
-        let ret = get_supply(3, 0, 0, 2, "Wierland", true, "Knud&Abel", false)
+        let ret = get_supply(3, 0, 0, 1, "Wierland", true, "Knud&Abel", false)
         console.log(ret)
         document.getElementById('demo').innerHTML = ret
     </script>
