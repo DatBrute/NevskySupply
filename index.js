@@ -57,8 +57,9 @@ const map = {
     'Velikiye Luki' : { trackways: ['Velikaya River'], waterways : ['Lovat'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[844, 900]},
  }
 
-var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
-var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
+ // TODO currently unused
+// var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
+// var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
 var start = "Wenden"; // start locale, string
 
 var carts = 0;
