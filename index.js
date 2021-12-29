@@ -31,10 +31,10 @@ const map = {
     'Kaibolovo' : { trackways: ['Narwia', 'Koporye'], waterways : ['Luga', 'Zheltsy'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[664, 289]},
     'Koporye' : { trackways: ['Kaibolovo', 'Vod'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: true, port: true, coords:[708, 214]},
     'Neva' : { trackways: ['Karelia', 'Vod', 'Izhora'], waterways : ['Ladoga'], teuton: false, seats: [], commandery: false, stronghold: false, port: true, coords:[868, 160]},
-    'Ladoga' : { trackways: ['Izhora'], waterways : ['Neva', 'Volkhov'], teuton: false, seats: ['Vladislav, Karelians'], commandery: false, stronghold: true, port: false, coords:[1029, 126]},
+    'Ladoga' : { trackways: ['Izhora'], waterways : ['Neva', 'Volkhov'], teuton: false, seats: ['Vladislav', 'Karelians'], commandery: false, stronghold: true, port: false, coords:[1029, 126]},
     'Vod' : { trackways: ['Koporye', 'Neva', 'Ingria'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[781, 270]},
     'Izhora' : { trackways: ['Neva', 'Ladoga', 'Ingria'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[911, 267]},
-    'Ingria' : { trackways: ['Vod', 'Izhoria', 'Tesovo'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[853, 334]},
+    'Ingria' : { trackways: ['Vod', 'Izhora', 'Tesovo'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[853, 334]},
     'Volkhov' : { trackways: [], waterways : ['Ladoga', 'Novgorod'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[1024, 345]},
     'Gdov' : { trackways: ['Plyussa River'], waterways : ['Narwia', 'Dorpat', 'Uzmen'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[539, 421]},
     'Plyussa River' : { trackways: ['Gdov', 'Zheltsy', 'Zhelcha River'], waterways : ['Narwia'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[640, 462]},
@@ -47,7 +47,7 @@ const map = {
     'Pskov' : { trackways: ['Izborsk', 'Zhelcha River', 'Dubrovno'], waterways : ['Uzmen', 'Ostrov'], teuton: false, seats: ['Yaroslav', 'Gavrilo'], commandery: false, stronghold: true, port: false, coords:[606, 659]},
     'Dubrovno' : { trackways: ['Pskov', 'Porkhov'], waterways : ['Shelon River'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[703, 655]},
     'Shelon River' : { trackways: ['Sablia'], waterways : ['Dubrovno', 'Porkhov', 'Novgorod', 'Rusa'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[822, 601]},
-    'Rusa' : { trackways: [], waterways : ['Shelon River', 'Novgorod', 'Lovat'], teuton: false, seats: ['Aleksander, Andrey'], commandery: false, stronghold: true, port: false, coords:[962, 633]},
+    'Rusa' : { trackways: [], waterways : ['Shelon River', 'Novgorod', 'Lovat'], teuton: false, seats: ['Aleksander', 'Andrey'], commandery: false, stronghold: true, port: false, coords:[962, 633]},
     'Izborsk' : { trackways: ['Ugaunia', 'Kirrumpah', 'Lettgallia', 'Pskov'], waterways : [], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[516, 701]},
     'Porkhov' : { trackways: ['Dubrovno', 'Sorot River'], waterways : ['Shelon River'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[792, 709]},
     'Lovat' : { trackways: [], waterways : ['Rusa', 'Velikiye Luki'], teuton: false, seats: [], commandery: false, stronghold: false, port: false, coords:[942, 735]},
@@ -138,7 +138,6 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
         if(seat_ship_paths.length > 0){
             let main = seat_ship_paths[0]
             let others = seat_paths.filter(path => path.route[path.route.length-1] !== main.route[main.route.length-1])
-            console.log(main, seat_paths, others)
             if(others.length > 0){    
                 return [[main.route, others[0].route], 2 + Math.min(ships, 2)]
             }else{                    
