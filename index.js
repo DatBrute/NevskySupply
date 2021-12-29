@@ -58,8 +58,8 @@ const map = {
  }
 
  // TODO currently unused
-// var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
-// var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
+var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
+var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
 var start = "Wenden"; // start locale, string
 
 var carts = 0;
@@ -79,6 +79,7 @@ function get_supply(carts = this.carts, boats = this.boats, sleds = this.sleds, 
 teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = [], initial = true){
     let paths = []
     if(!blocked(start, teuton)){
+        already_visited = already_visited.slice(0) // clone the array, since they are pass by reference
         already_visited.push(start)
         
         if(carts > 0 || sleds > 0){
@@ -127,7 +128,7 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
             return [[double_seat_ship_paths[0].route], 2 + Math.min(ships, 2)]
         }
         if(double_seat_paths.length > 0){
-            if(ship_paths.length > 0){    
+            if(ship_paths.length > 0 && ships > 0){    
                 return[[double_seat_paths[0].route, ship_paths[0].route], 2 + Math.min(ships,2)]
             }else{                    
                 return [[double_seat_paths[0].route], 2]
@@ -136,17 +137,18 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
 
         if(seat_ship_paths.length > 0){
             let main = seat_ship_paths[0]
-            let others = seat_paths.filter(path => path.route[path.length-1] !== main.route[main.length-1])
+            let others = seat_paths.filter(path => path.route[path.route.length-1] !== main.route[main.route.length-1])
+            console.log(main, seat_paths, others)
             if(others.length > 0){    
                 return [[main.route, others[0].route], 2 + Math.min(ships, 2)]
             }else{                    
-                return [[main].route, 1 + Math.min(ships, 2)]
+                return [[main.route], 1 + Math.min(ships, 2)]
             }
         }
         if(seat_paths.length > 0){
             let ret = seat_paths.slice(0, 2).map(path => path.route)
             let prov = ret.length
-            if(ship_paths.length > 0){
+            if(ship_paths.length > 0 && ships > 0){
                 ret.push(ship_paths[0].route)
                 return [ret, prov + Math.min(ships, 2)]
             }else{
@@ -174,7 +176,7 @@ function supportsShips(locale, teuton){
 }
 
 function seatsFor(locale, lord, teuton, bonus){
-    return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && ((map[locale].commandery && teuton) || (bonus && locale === 'Novgorod' && !teuton)) ? 1 : 0)) 
+    return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && ((map[locale].commandery && teuton) || (bonus && locale === 'Novgorod' && !teuton))) ? 1 : 0) 
 }
 
 function updatePath(){
@@ -183,7 +185,7 @@ function updatePath(){
     var supply = get_supply()
     $('#prov_count').text(supply[1])
     draw_circle(start, ctx)
-    var already_visited = [start]
+    let already_visited = [start]
     for(path of supply[0]){
         for(locale of path){
          if(!already_visited.includes(locale)){
@@ -220,8 +222,18 @@ $(document).ready(function() {
 
     $('.intvar').change(function(event){
         var value = parseInt(event.target.value)
-        if(value >= 0 && value <= 8){
-            window[event.target.id] = value
+        if(value < 0 || value > 8){
+            alert("Cannot have less than 0 or more than 8 of an asset")
+            event.target.value = value < 0 ? 0 : 8
+        }else{
+            if(
+            (event.target.id === 'sleds' && (boats > 0 || carts > 0))
+            || (['carts', 'boats'].includes(event.target.id) && (sleds > 0))){
+                alert("Cannot have both sleds and carts/boats")
+                event.target.value = 0
+            }else{
+                window[event.target.id] = value
+            }
         }
         updatePath()
     })
