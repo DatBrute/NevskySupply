@@ -57,6 +57,9 @@ const map = {
     'Velikiye Luki' : { trackways: ['Velikaya River'], waterways : ['Lovat'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[844, 900]},
  }
 
+ // TODO path seats needs to be a list of strings, one for normal and the other for bonus, rather than an int, this way we don't get duplicates
+ // TODO lords should never be blocked at the start location
+
  // TODO currently unused
 var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
 var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
@@ -138,7 +141,7 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
         if(seat_ship_paths.length > 0){
             let main = seat_ship_paths[0]
             let others = seat_paths.filter(path => path.route[path.route.length-1] !== main.route[main.route.length-1])
-            if(others.length > 0){    
+            if(others.length > 0){
                 return [[main.route, others[0].route], 2 + Math.min(ships, 2)]
             }else{                    
                 return [[main.route], 1 + Math.min(ships, 2)]
@@ -171,11 +174,11 @@ function blocked(locale, teuton){
 }
 
 function supportsShips(locale, teuton){
-    return (map[locale].port && teuton) || (locale === 'Novgorod' && !teuton)
+    return teuton ? map[locale].port : locale === 'Novgorod'
 }
 
 function seatsFor(locale, lord, teuton, bonus){
-    return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && ((map[locale].commandery && teuton) || (bonus && locale === 'Novgorod' && !teuton))) ? 1 : 0) 
+    return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && (teuton ? map[locale].commandery : locale === 'Novgorod')) ? 1 : 0) 
 }
 
 function updatePath(){
