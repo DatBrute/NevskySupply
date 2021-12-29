@@ -1,0 +1,10 @@
+body, *{
+    background-color: #ead9c0;
+}
+.col>img{
+    max-width: 91px;
+    max-height: 108px;
+}
+.lord{
+    border: 1.5px solid transparent ;
+}
