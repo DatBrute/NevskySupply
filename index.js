@@ -225,7 +225,10 @@ $(document).ready(function() {
 
     $('.intvar').change(function(event){
         var value = parseInt(event.target.value)
-        if(value < 0 || value > 8){
+        if(isNaN(value)){
+            alert("Value must be an integer")
+            event.target.value = 0
+        }else if(value < 0 || value > 8){
             alert("Cannot have less than 0 or more than 8 of an asset")
             event.target.value = value < 0 ? 0 : 8
         }else{
