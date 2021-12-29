@@ -57,9 +57,6 @@ const map = {
     'Velikiye Luki' : { trackways: ['Velikaya River'], waterways : ['Lovat'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[844, 900]},
  }
 
- // TODO path seats needs to be a list of strings, one for normal and the other for bonus, rather than an int, this way we don't get duplicates
- // TODO lords should never be blocked at the start location
-
  // TODO currently unused
 var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
 var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
@@ -74,23 +71,23 @@ var lord = "Andreas"
 var bonus = false; // whether the bonus card is active, bool
 
 // if initial is true, returns a tuple containing:
-// an array of paths needed to reach the maximum provender per action
+// an array of routes needed to reach the maximum provender per action
 // an int representing maximum provender per action
 
-// if initial is false, instead returns an array of paths that end at a possible supply source
+// if initial is false, instead returns an array of routes that end at a possible supply source
 function get_supply(carts = this.carts, boats = this.boats, sleds = this.sleds, ships = this.ships, start = this.start, 
 teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = [], initial = true){
-    let paths = []
-    if(!blocked(start, teuton)){
+    let routes = []
+    if(initial || !blocked(start, teuton)){
         already_visited = already_visited.slice(0) // clone the array, since they are pass by reference
         already_visited.push(start)
         
         if(carts > 0 || sleds > 0){
             for (locale of map[start].trackways){
                 if(!(already_visited.includes(locale))){
-                    let new_paths = get_supply((carts > 0 ? carts -1 : 0), boats, (sleds > 0 ? sleds - 1 : 0), ships, locale, teuton, lord, bonus, already_visited, false)
-                    for (path of new_paths){
-                        paths.push([start].concat(path))
+                    let new_routes = get_supply((carts > 0 ? carts -1 : 0), boats, (sleds > 0 ? sleds - 1 : 0), ships, locale, teuton, lord, bonus, already_visited, false)
+                    for (path of new_routes){
+                        routes.push([start].concat(path))
                     }
                 }
             }
@@ -98,68 +95,75 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
         if(boats > 0 || sleds > 0){
             for (locale of map[start].waterways){
                 if(!(already_visited.includes(locale))){
-                    let new_paths = get_supply(carts, (boats > 0 ? boats - 1 : 0), (sleds > 0 ? sleds - 1 : 0), ships, locale, teuton, lord, bonus, already_visited, false)
-                    for (path of new_paths){
-                        paths.push([start].concat(path))
+                    let new_routes = get_supply(carts, (boats > 0 ? boats - 1 : 0), (sleds > 0 ? sleds - 1 : 0), ships, locale, teuton, lord, bonus, already_visited, false)
+                    for (path of new_routes){
+                        routes.push([start].concat(path))
                     }
                 }
             }
         }
-        if(seatsFor(start, lord, teuton, bonus) > 0 || supportsShips(start, teuton)){
-            paths.push([start])
+        var result = getSources(start, lord, teuton, bonus)
+        if(result.some(source => source === true)){
+            routes.push([start])
         }
     }
     if(initial){
-       paths.sort((a,b) => a.length - b.length)
-       paths = paths.map(function(path){
-           let seats = 0
-           for (locale of path){
-                seats += seatsFor(locale, lord, teuton, bonus)
+
+       let paths = routes.map(function(route){
+           let sourceTotal = [[],[],[]]
+           for (locale of route){ 
+               let x = getSources(locale, lord, teuton, bonus)
+               console.log(locale, x)
+               for (i of [0,1,2]){
+                    if(x[i]){
+                        sourceTotal[i].push(locale)
+                    }
+                }
            }
+           let seats = sourceTotal[0].length + sourceTotal[1].length
+           let portsOrNovgorod = sourceTotal[2]
            return {
-            'seats': Math.min(seats, 2),
-            'supportsShips': path.some(locale => supportsShips(locale, teuton)),
-            'route': path
+            'sources': sourceTotal, // a bool tuple: seat, bonus seat, port/novgorod
+            'route': route,
+            'sort': (seats >= 2 && portsOrNovgorod >= 1 ? 0 : seats >= 2 ? 1 : seats >= 1 && portsOrNovgorod >= 1  ? 2 : seats >= 1 ? 3 : 4) + (route.length / 10.0)
            }
         })
-        let seat_paths = paths.filter(path => path.seats >= 1)
-        let double_seat_paths = paths.filter(path => path.seats >= 2)
-        let ship_paths = paths.filter(path => path.supportsShips)
-        let double_seat_ship_paths = double_seat_paths.filter(path => ship_paths.includes(path))
-        let seat_ship_paths = seat_paths.filter(path => ship_paths.includes(path))
-        if(double_seat_ship_paths.length > 0){
-            return [[double_seat_ship_paths[0].route], 2 + Math.min(ships, 2)]
-        }
-        if(double_seat_paths.length > 0){
-            if(ship_paths.length > 0 && ships > 0){    
-                return[[double_seat_paths[0].route, ship_paths[0].route], 2 + Math.min(ships,2)]
-            }else{                    
-                return [[double_seat_paths[0].route], 2]
+        paths.sort((a,b) => a.sort - b.sort)
+        let seats = 0
+        let portsOrNovgorod = 0
+        let retRoutes = []
+        let sourceTotal = [[], [], []]
+        console.log(paths)
+        for (path of paths){
+            let newSources = false
+            for(i of [0, 1, 2]){
+                for(source of path.sources[i]){
+                    if(!sourceTotal[i].includes(source)){
+                        if(i <= 1){
+                            if(seats < 2){
+                                seats++
+                                sourceTotal[i].push(source)
+                                newSources = true
+                            }
+                        }else{
+                            if (portsOrNovgorod < 1 && ships > 0){
+                                portsOrNovgorod++
+                                sourceTotal[i].push(source)
+                                newSources = true
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            if(newSources){
+                console.log(path)
+                retRoutes.push(path.route)
             }
         }
-
-        if(seat_ship_paths.length > 0){
-            let main = seat_ship_paths[0]
-            let others = seat_paths.filter(path => path.route[path.route.length-1] !== main.route[main.route.length-1])
-            if(others.length > 0){
-                return [[main.route, others[0].route], 2 + Math.min(ships, 2)]
-            }else{                    
-                return [[main.route], 1 + Math.min(ships, 2)]
-            }
-        }
-        if(seat_paths.length > 0){
-            let ret = seat_paths.slice(0, 2).map(path => path.route)
-            let prov = ret.length
-            if(ship_paths.length > 0 && ships > 0){
-                ret.push(ship_paths[0].route)
-                return [ret, prov + Math.min(ships, 2)]
-            }else{
-                return[ret, prov]
-            }
-        }
-        return [[], 0]
+        return [retRoutes, Math.min(seats, 2) + (portsOrNovgorod >= 1 ? Math.min(ships, 2) : 0)]
     }else{
-        return paths
+        return routes
     }
 }
 
@@ -173,12 +177,9 @@ function blocked(locale, teuton){
     }
 }
 
-function supportsShips(locale, teuton){
-    return teuton ? map[locale].port : locale === 'Novgorod'
-}
-
-function seatsFor(locale, lord, teuton, bonus){
-    return (map[locale].seats.includes(lord) ? 1 : 0) + ((bonus && (teuton ? map[locale].commandery : locale === 'Novgorod')) ? 1 : 0) 
+// returns a bool tuple: seat, bonus seat, port/novgorod
+function getSources(locale, lord, teuton, bonus){
+    return [map[locale].seats.includes(lord), bonus && (teuton ? map[locale].commandery : locale === 'Novgorod'), teuton ? map[locale].port : locale === 'Novgorod']
 }
 
 function updatePath(){
