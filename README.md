@@ -1,5 +1,5 @@
 # NevskySupply
-
+<pre>
 This is a frontend calculator for the supply part of the Nevsky boardgame. To operate it simply open it as a webpage.
 
 Nevsky game: https://www.gmtgames.com/p-696-nevsky-teutons-and-rus-in-collision-1240-1242.aspx
@@ -29,3 +29,4 @@ Provender received from supply routes:
 Up to 2 for 2 seats (coat of arms of the lord). However, if the bonus is enabled, a Teuton lord counts commanderies (white shield with black cross) as a seat, and a Russian lord counts Novgorod as a seat.
 Up to 2 for 2 ships, if and only if the supply routes include a least one port for a Teuton lord or Novgorod for a Russian lord.
 Therefore, the maximum possible provender is 4.
+</pre>
