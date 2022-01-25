@@ -57,9 +57,9 @@ const map = {
     'Velikiye Luki' : { trackways: ['Velikaya River'], waterways : ['Lovat'], teuton: false, seats: [], commandery: false, stronghold: true, port: false, coords:[844, 900]},
  }
 
- // TODO currently unused
-var bonus_friendly_locales = []; // locales that are besieged by a friendly or conquered by a friendly, can trace supply
-var bonus_enemy_locales = []; // locales with an enemy lord or conquered by an enemy, can't trace supply
+ // enemy locales that are besieged by a friendly or conquered by a friendly, can trace supply
+// OR friendly locales with an enemy lord or conquered by an enemy, can't trace supply
+var inverted_side_locales = []; 
 var start = "Wenden"; // start locale, string
 
 var carts = 0;
@@ -168,13 +168,8 @@ teuton = this.teuton, lord = this.lord, bonus = this.bonus, already_visited = []
 }
 
 function blocked(locale, teuton){
-    if(bonus_friendly_locales.includes(locale)){
-        return false
-    }else if(bonus_enemy_locales.includes(locale)){
-        return true
-    }else{
-        return (map[locale].stronghold && (map[locale].teuton != teuton))
-    }
+    let normally_blocked = (map[locale].stronghold && (map[locale].teuton != teuton))
+    return inverted_side_locales.includes(locale) ? !normally_blocked : normally_blocked
 }
 
 // returns a bool tuple: seat, bonus seat, port/novgorod
@@ -191,21 +186,38 @@ function updatePath(){
     let already_visited = [start]
     for(path of supply[0]){
         for(locale of path){
-         if(!already_visited.includes(locale)){
-             draw_circle(locale, ctx, '#FE2712', 25)
-             already_visited.push(locale)
-         }
+            if(!already_visited.includes(locale)){
+                draw_circle(locale, ctx, '#FE2712', 25)
+                already_visited.push(locale)
+            }
         }
     }
-    
+    for(locale in map){
+        if(blocked(locale, teuton)){
+            draw_x(locale, ctx, '#0000ff', 25)
+        }
+    }
 }
 
 function draw_circle(locale, ctx = $('canvas#map_canvas').get(0).getContext('2d'), color = '#000000', radius = 30){
-    ctx.beginPath()
     let coords = map[locale].coords
-    ctx.arc(coords[0], coords[1], radius, 0, 2*Math.PI)
     ctx.strokeStyle = color;
+    ctx.beginPath()
+    ctx.arc(coords[0], coords[1], radius, 0, 2*Math.PI)
     ctx.stroke()
+}
+
+function draw_x(locale, ctx = $('canvas#map_canvas').get(0).getContext('2d'), color = '#000000', radius){
+    let coords = map[locale].coords
+    let length = Math.sqrt(2*Math.pow(radius, 2))/2
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(coords[0] - length, coords[1] - length)
+    ctx.lineTo(coords[0] + length, coords[1] + length)
+    ctx.stroke();
+    ctx.moveTo(coords[0] + length, coords[1] - length)
+    ctx.lineTo(coords[0] - length, coords[1] + length)
+    ctx.stroke();
 }
 
 $(document).ready(function() {
@@ -262,8 +274,8 @@ $(document).ready(function() {
         updatePath()
     })
     
-    const cm = $('canvas#map_canvas')
-    cm.on('click', function(event) {
+    const map_canvas = $('canvas#map_canvas')
+    map_canvas.on('click', function(event) {
         let x = event.pageX - this.offsetLeft
         let y = event.pageY - this.offsetTop
         for (locale in map){
@@ -273,6 +285,27 @@ $(document).ready(function() {
             if(dist < 30){
                 start = locale
                 updatePath()
+                break
+            }
+        }
+    });
+    map_canvas.on('contextmenu', function(event) {
+        event.preventDefault();
+        let x = event.pageX - this.offsetLeft
+        let y = event.pageY - this.offsetTop
+        for (locale in map){
+            let lx = map[locale].coords[0]
+            let ly = map[locale].coords[1]
+            let dist = Math.sqrt(Math.pow(x-lx, 2) + Math.pow(y-ly, 2))
+            if(dist < 30){
+                let i = inverted_side_locales.indexOf(locale)
+                if(i > -1){ // array includes locale
+                    inverted_side_locales.splice(i, 1)
+                }else{
+                    inverted_side_locales.push(locale)
+                }
+                updatePath();
+                console.log(inverted_side_locales);
                 break
             }
         }
